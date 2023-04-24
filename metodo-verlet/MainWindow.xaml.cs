@@ -1,9 +1,11 @@
 ﻿using HelixToolkit.Wpf;
 using metodo_verlet.Model;
 using metodo_verlet.Model3D;
+using metodo_verlet.Windows;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,11 +28,15 @@ namespace metodo_verlet
     /// </summary>
     public partial class MainWindow : Window
     {
-        List<CuerpoCeleste3D> cuerpos;
-        Verlet verlet;
-
+        private List<CuerpoCeleste3D> cuerpos;
+        private Dictionary<Guid, ArrowVisual3D> velocidadArrow = new Dictionary<Guid, ArrowVisual3D>();
+        private Dictionary<Guid, ArrowVisual3D> aceleracionArrow = new Dictionary<Guid, ArrowVisual3D>();
+        private Verlet verlet;
         private Timer _timer;
+
         private bool verletEnProgreso = false;
+        private int numeroDePaso = 0;
+
 
         public MainWindow()
         {
@@ -39,18 +45,28 @@ namespace metodo_verlet
             CrearPlanetas();    
         }
 
+
+
+        private void MostrarEdicion(Guid guidEdicion)
+        {
+            var cuerpoEnEdicion = cuerpos.First(c => c.Guid == guidEdicion);
+            var velocidadEnEdicion = velocidadArrow[guidEdicion];
+            var editarCondicionesWindow = new EditarCondicionesWindow(ref cuerpoEnEdicion, ref velocidadEnEdicion);
+            editarCondicionesWindow.Show();
+        }
+
+
         private void InicializarTimer()
         {
             _timer = new Timer();
-            _timer.Interval = 1; // Intervalo de tiempo en milisegundos
+            _timer.Interval = 1;
             _timer.Elapsed += ActualizarModelo;
             _timer.AutoReset = true;
             _timer.Enabled = true;
         }
 
 
-        public int numeroDePaso = 0;
-        private void ActualizarModelo(object sender, ElapsedEventArgs e)
+        private void ActualizarModelo(object? sender, ElapsedEventArgs e)
         {
             if (verletEnProgreso) return;
             verletEnProgreso = true;
@@ -67,14 +83,22 @@ namespace metodo_verlet
                     if (numeroDePaso == 10)
                     {
                         var color = cuerpo.CuerpoCelesteProp.Color;
-                        contenedor.Children.Add(new SphereVisual3D() { ThetaDiv = 10, PhiDiv = 10, Radius = 5, Center = cuerpo.CuerpoCelesteProp.Posicion.ToPoint3D(), Fill = color });
+                        contenedor.Children.Add(new SphereVisual3D() { ThetaDiv = 2, PhiDiv = 2, Radius = 5, Center = cuerpo.CuerpoCelesteProp.Posicion.ToPoint3D(), Fill = color });
                     }
+
+                    var proporcionVectorVelocidadRadio = cuerpo.CuerpoCelesteProp.Radio / cuerpo.CuerpoCelesteProp.Velocidad.Length;
+                    var proporcionVectorAceleracionRadio = cuerpo.CuerpoCelesteProp.Radio / cuerpo.CuerpoCelesteProp.Aceleracion.Length;
+
+                    var vectorVelocidad3D = velocidadArrow[cuerpo.Guid];
+                    vectorVelocidad3D.Point1 = (cuerpo.CuerpoCelesteProp.Posicion + new Vector3D(0, 0, cuerpo.CuerpoCelesteProp.Radio)).ToPoint3D();
+                    vectorVelocidad3D.Point2 = (cuerpo.CuerpoCelesteProp.Posicion + (cuerpo.CuerpoCelesteProp.Velocidad * proporcionVectorVelocidadRadio * 2)).ToPoint3D();
+
+                    var vectorAceleracion3D = aceleracionArrow[cuerpo.Guid];
+                    vectorAceleracion3D.Point1 = (cuerpo.CuerpoCelesteProp.Posicion + new Vector3D(0, 0, -cuerpo.CuerpoCelesteProp.Radio)).ToPoint3D();
+                    vectorAceleracion3D.Point2 = (cuerpo.CuerpoCelesteProp.Posicion + (cuerpo.CuerpoCelesteProp.Aceleracion * proporcionVectorAceleracionRadio * 2)).ToPoint3D();
                 }
 
-                if (numeroDePaso == 10)
-                {
-                    numeroDePaso = 0;
-                }
+                if (numeroDePaso == 10) numeroDePaso = 0;
             });
 
             verletEnProgreso = false;
@@ -99,28 +123,18 @@ namespace metodo_verlet
                 Posicion = new Vector3D(0, 1000, 0),
                 Masa = 2000,
                 Radio = 100,
-                Velocidad = new Vector3D(3, -3, 1),
+                Velocidad = new Vector3D(0, 0, 0),
                 Aceleracion = new Vector3D(0, 0, 0),
                 Color = Brushes.Blue
             };
 
-            //var venus = new CuerpoCeleste()
-            //{
-            //    Nombre = "Tierra",
-            //    Posicion = new Vector3D(0, 1000, 0),
-            //    Masa = 1900,
-            //    Radio = 90,
-            //    Velocidad = new Vector3D(10, 0, 0),
-            //    Aceleracion = new Vector3D(0, 0, 0)
-            //};
-
             var marte = new CuerpoCeleste()
             {
                 Nombre = "Marte",
-                Posicion = new Vector3D(1000, 1000, 0),
-                Masa = 1700,
-                Radio = 70,
-                Velocidad = new Vector3D(-4, 1, 0),
+                Posicion = new Vector3D(0, 0, 0),
+                Masa = 2000,
+                Radio = 100,
+                Velocidad = new Vector3D(0, 0, 0),
                 Aceleracion = new Vector3D(0, 0, 0),
                 Color = Brushes.Red
             };
@@ -144,29 +158,46 @@ namespace metodo_verlet
                 Radio = 250,
                 Velocidad = new Vector3D(2, 0, 1),
                 Aceleracion = new Vector3D(0, 0, 0),
-                Color = Brushes.Orange
+                Color = Brushes.Orange,
             };
 
             var luna3d = new CuerpoCeleste3D(luna);
+            luna3d.CuerpoCeleste3DClick += MostrarEdicion;
             var tierra3d = new CuerpoCeleste3D(tierra);
-            //var venus3d = new CuerpoCeleste3D(venus);
+            tierra3d.CuerpoCeleste3DClick += MostrarEdicion;
             var marte3d = new CuerpoCeleste3D(marte);
+            marte3d.CuerpoCeleste3DClick += MostrarEdicion;
             var saturno3d = new CuerpoCeleste3D(saturno);
+            saturno3d.CuerpoCeleste3DClick += MostrarEdicion;
             var jupiter3d = new CuerpoCeleste3D(jupiter);
+            jupiter3d.CuerpoCeleste3DClick += MostrarEdicion;
 
             cuerpos = new List<CuerpoCeleste3D>() { luna3d, tierra3d, marte3d, saturno3d, jupiter3d };
+            //cuerpos = new List<CuerpoCeleste3D>() { marte3d, tierra3d, };
 
-            contenedor.Children.Add(luna3d);
-            contenedor.Children.Add(tierra3d);
-            //contenedor.Children.Add(venus3d);
-            contenedor.Children.Add(marte3d);
-            contenedor.Children.Add(saturno3d);
-            contenedor.Children.Add(jupiter3d);
+            foreach (var item in cuerpos)
+            {
+                var vectorVelocidad = new ArrowVisual3D() { Diameter = 5, Fill = Brushes.White };
+                vectorVelocidad.Point1 = (item.CuerpoCelesteProp.Posicion + new Vector3D(0, 0, item.CuerpoCelesteProp.Radio)).ToPoint3D();
+                vectorVelocidad.Point2 = (item.CuerpoCelesteProp.Posicion + (item.CuerpoCelesteProp.Velocidad * 2)).ToPoint3D();
+
+                var vectorAceleracion = new ArrowVisual3D() { Diameter = 5, Fill = Brushes.Red };
+                vectorAceleracion.Point1 = (item.CuerpoCelesteProp.Posicion + new Vector3D(0, 0, -item.CuerpoCelesteProp.Radio)).ToPoint3D();
+                vectorAceleracion.Point2 = (item.CuerpoCelesteProp.Posicion + (item.CuerpoCelesteProp.Aceleracion * 2)).ToPoint3D();
+
+                velocidadArrow.Add(item.Guid, vectorVelocidad);
+                aceleracionArrow.Add(item.Guid, vectorAceleracion);
+
+                contenedor.Children.Add(item);
+                contenedor.Children.Add(vectorVelocidad);
+                contenedor.Children.Add(vectorAceleracion);
+            }
         }
 
+
+        #region Eventos de ventana
         private void Iniciar_Click(object sender, RoutedEventArgs e)
         {
-
             InicializarTimer();
             verlet = new Verlet(cuerpos, 0.1);
         }
@@ -182,5 +213,6 @@ namespace metodo_verlet
             _timer?.Stop();
             _timer = null;
         }
+        #endregion
     }
 }

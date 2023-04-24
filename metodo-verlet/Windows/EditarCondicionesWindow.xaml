@@ -1,0 +1,55 @@
+﻿<Window
+    x:Class="metodo_verlet.Windows.EditarCondicionesWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:metodo_verlet.Windows"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="EditarCondicionesWindow"
+    Width="500"
+    Height="400"
+    Closing="Window_Closing"
+    Topmost="True"
+    WindowStyle="ToolWindow"
+    mc:Ignorable="d">
+    <StackPanel Margin="20">
+        <TextBlock FontSize="20" Text="Posición inicial" />
+        <Label Content="X" />
+        <Slider
+            x:Name="sliderX"
+            Maximum="3000"
+            Minimum="-3000"
+            Value="{Binding PosicionX}" />
+        <Label Content="Y" />
+        <Slider
+            x:Name="sliderY"
+            Maximum="3000"
+            Minimum="-3000"
+            Value="{Binding PosicionY}" />
+        <Label Content="Z" />
+        <Slider
+            x:Name="sliderZ"
+            Maximum="3000"
+            Minimum="-3000"
+            Value="{Binding PosicionZ}" />
+        <TextBlock FontSize="20" Text="Velocidad inicial" />
+        <Label Content="X" />
+        <Slider
+            x:Name="sliderVX"
+            Maximum="100"
+            Minimum="-100"
+            Value="{Binding VelocidadX}" />
+        <Label Content="Y" />
+        <Slider
+            x:Name="sliderVY"
+            Maximum="100"
+            Minimum="-100"
+            Value="{Binding VelocidadY}" />
+        <Label Content="Z" />
+        <Slider
+            x:Name="sliderVZ"
+            Maximum="100"
+            Minimum="-100"
+            Value="{Binding VelocidadZ}" />
+    </StackPanel>
+</Window>

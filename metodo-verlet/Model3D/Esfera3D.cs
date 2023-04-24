@@ -9,10 +9,12 @@ using System.Windows.Media.Media3D;
 using System.Windows.Media;
 using System.Windows;
 using HelixToolkit.Wpf;
+using System.Windows.Input;
+using System.Xml.Linq;
 
 namespace metodo_verlet.Model3D
 {
-    public class Esfera3D : ModelVisual3D
+    public class Esfera3D : UIElement3D
     {
         public ImageBrush Texture { get; private set; }
         public SphereVisual3D Sphere { get; private set; }
@@ -21,7 +23,7 @@ namespace metodo_verlet.Model3D
         public Esfera3D(string Nombre, double Radio)
         {
             Sphere = new SphereVisual3D() { ThetaDiv = 60, PhiDiv = 30, Radius = Radio };
-            Children.Add(Sphere);
+            Visual3DModel = Sphere.Content;
 
             ActualizarTextura(Nombre);
         }
@@ -35,11 +37,16 @@ namespace metodo_verlet.Model3D
             return img;
         }
 
-        void ActualizarTextura(string Nombre)
+        private void ActualizarTextura(string Nombre)
         {
             var img = ObtenerTextura(Nombre);
             Texture = new ImageBrush(img);
             
+            Sphere.Material = MaterialHelper.CreateMaterial(Texture);
+        }
+
+        public void RecargarTextura()
+        {
             Sphere.Material = MaterialHelper.CreateMaterial(Texture);
         }
     }
